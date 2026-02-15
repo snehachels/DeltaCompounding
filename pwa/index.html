@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Habits">
+    <meta name="theme-color" content="#ffffff">
+    <meta name="description" content="A minimalist habit tracker - no streaks, just clarity">
+
+    <title>Habit Tracker</title>
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+
+    <!-- iOS Icons -->
+    <link rel="apple-touch-icon" href="icons/icon.svg">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <!-- Auth Screen -->
+    <div id="auth-screen" class="auth-screen">
+        <div class="auth-container">
+            <div class="auth-header">
+                <div class="auth-logo">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                </div>
+                <h1>Habit Tracker</h1>
+                <p>Track your habits with clarity</p>
+            </div>
+
+            <form id="auth-form" class="auth-form" onsubmit="handleAuthSubmit(event)" data-mode="signin">
+                <h2 id="auth-title">Welcome back</h2>
+
+                <div class="auth-error hidden" id="auth-error"></div>
+
+                <div class="form-group">
+                    <label for="auth-email">Email</label>
+                    <input type="email" id="auth-email" required placeholder="you@example.com" autocomplete="email">
+                </div>
+
+                <div class="form-group">
+                    <label for="auth-password">Password</label>
+                    <input type="password" id="auth-password" required placeholder="Enter your password" minlength="6" autocomplete="current-password">
+                </div>
+
+                <button type="submit" id="auth-submit" class="btn btn-primary btn-full">Sign In</button>
+
+                <p id="auth-switch-text" class="auth-switch">
+                    Don't have an account? <a href="#" onclick="switchToSignUp(); return false;">Sign up</a>
+                </p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main App Content (hidden until authenticated) -->
+    <div id="app-content" class="hidden">
+        <div id="app">
+            <!-- App Banner -->
+            <div id="app-banner">
+                <div class="banner-brand">
+                    <span class="brand-delta">Delta</span><span class="brand-compounding">Compounding</span>
+                </div>
+                <!-- User Menu -->
+                <div class="user-menu">
+                    <button class="user-menu-btn" onclick="toggleUserMenu(event)">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                    </button>
+                    <div id="user-menu-dropdown" class="user-menu-dropdown">
+                        <div class="user-menu-email" id="user-email"></div>
+                        <div class="user-menu-divider"></div>
+                        <button class="user-menu-item" onclick="handleSignOut()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                                <polyline points="16 17 21 12 16 7"></polyline>
+                                <line x1="21" y1="12" x2="9" y2="12"></line>
+                            </svg>
+                            Sign out
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Page Header -->
+            <header id="header">
+                <h1 id="page-title">Today</h1>
+                <p id="page-subtitle"></p>
+            </header>
+
+            <!-- Main Content Area -->
+            <main id="main-content">
+                <!-- Today Tab -->
+                <section id="today-tab" class="tab-content active">
+                    <div id="today-list" class="habit-list"></div>
+                    <div id="today-empty" class="empty-state hidden">
+                        <div class="empty-icon">
+                            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M9 11l3 3L22 4"></path>
+                                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                            </svg>
+                        </div>
+                        <p class="empty-text">You have no active habits.</p>
+                        <p class="empty-subtext">Go to Habits tab to add one</p>
+                    </div>
+                    <div id="today-complete" class="empty-state hidden">
+                        <div class="empty-icon success">
+                            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                            </svg>
+                        </div>
+                        <p class="empty-text">All habits completed for today.</p>
+                        <p class="empty-subtext">See you tomorrow.</p>
+                    </div>
+                </section>
+
+                <!-- Habits Tab -->
+                <section id="habits-tab" class="tab-content">
+                    <div id="habits-list" class="habit-list"></div>
+                    <div id="habits-empty" class="empty-state hidden">
+                        <div class="empty-icon">
+                            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <line x1="12" y1="18" x2="12" y2="12"></line>
+                                <line x1="9" y1="15" x2="15" y2="15"></line>
+                            </svg>
+                        </div>
+                        <p class="empty-text">Get started by adding your first habit.</p>
+                        <button class="btn btn-primary" onclick="showAddHabitModal()">Add Habit</button>
+                    </div>
+                </section>
+
+                <!-- History Tab -->
+                <section id="history-tab" class="tab-content">
+                    <div id="history-controls" class="controls-bar">
+                        <select id="history-range" class="select-control">
+                            <option value="7">7 Days</option>
+                            <option value="30" selected>30 Days</option>
+                            <option value="90">90 Days</option>
+                        </select>
+                    </div>
+                    <div id="history-grid" class="history-grid"></div>
+                    <div id="history-empty" class="empty-state hidden">
+                        <div class="empty-icon">
+                            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="16" y1="2" x2="16" y2="6"></line>
+                                <line x1="8" y1="2" x2="8" y2="6"></line>
+                                <line x1="3" y1="10" x2="21" y2="10"></line>
+                            </svg>
+                        </div>
+                        <p class="empty-text">Your history will appear here once you start tracking habits.</p>
+                    </div>
+                </section>
+
+                <!-- Insights Tab -->
+                <section id="insights-tab" class="tab-content">
+                    <div id="insights-controls" class="controls-bar">
+                        <select id="insights-range" class="select-control">
+                            <option value="7">7 Days</option>
+                            <option value="30" selected>30 Days</option>
+                            <option value="90">90 Days</option>
+                        </select>
+                    </div>
+                    <div id="insights-cards" class="insights-container"></div>
+                    <div id="insights-empty" class="empty-state hidden">
+                        <div class="empty-icon">
+                            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <line x1="18" y1="20" x2="18" y2="10"></line>
+                                <line x1="12" y1="20" x2="12" y2="4"></line>
+                                <line x1="6" y1="20" x2="6" y2="14"></line>
+                            </svg>
+                        </div>
+                        <p class="empty-text">Complete a few habits to see insights about your patterns.</p>
+                    </div>
+                </section>
+            </main>
+
+            <!-- Bottom Tab Bar -->
+            <nav id="tab-bar">
+                <button class="tab-btn" data-tab="habits">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="8" y1="6" x2="21" y2="6"></line>
+                        <line x1="8" y1="12" x2="21" y2="12"></line>
+                        <line x1="8" y1="18" x2="21" y2="18"></line>
+                        <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                        <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                        <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                    </svg>
+                    <span>Habits</span>
+                </button>
+                <button class="tab-btn active" data-tab="today">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                    <span>Today</span>
+                </button>
+                <button class="tab-btn" data-tab="history">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                    <span>History</span>
+                </button>
+                <button class="tab-btn" data-tab="insights">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="20" x2="18" y2="10"></line>
+                        <line x1="12" y1="20" x2="12" y2="4"></line>
+                        <line x1="6" y1="20" x2="6" y2="14"></line>
+                    </svg>
+                    <span>Insights</span>
+                </button>
+            </nav>
+
+            <!-- Add/Edit Habit Modal -->
+            <div id="habit-modal" class="modal hidden">
+                <div class="modal-backdrop" onclick="closeHabitModal()"></div>
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2 id="modal-title">Add Habit</h2>
+                        <button class="modal-close" onclick="closeHabitModal()">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                        </button>
+                    </div>
+                    <form id="habit-form" onsubmit="saveHabit(event)">
+                        <input type="hidden" id="habit-id">
+                        <div class="form-group">
+                            <label for="habit-name">Habit name</label>
+                            <input type="text" id="habit-name" maxlength="50" required placeholder="e.g., Morning run">
+                            <span class="char-count"><span id="name-count">0</span>/50</span>
+                        </div>
+                        <div class="form-group">
+                            <label for="habit-description">Why does this matter to you?</label>
+                            <textarea id="habit-description" maxlength="200" rows="3" placeholder="Optional: Add context for yourself"></textarea>
+                            <span class="char-count"><span id="desc-count">0</span>/200</span>
+                        </div>
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-secondary" onclick="closeHabitModal()">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Save</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Delete Confirmation Modal -->
+            <div id="delete-modal" class="modal hidden">
+                <div class="modal-backdrop" onclick="closeDeleteModal()"></div>
+                <div class="modal-content modal-small">
+                    <h2>Delete Habit?</h2>
+                    <p id="delete-message">This will delete the habit and all its history. This cannot be undone.</p>
+                    <div class="form-actions">
+                        <button class="btn btn-secondary" onclick="closeDeleteModal()">Cancel</button>
+                        <button class="btn btn-danger" onclick="confirmDelete()">Delete</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Toast Notification -->
+            <div id="toast" class="toast hidden"></div>
+
+            <!-- Floating Action Button for Add Habit -->
+            <button id="fab-add" class="fab hidden" onclick="showAddHabitModal()">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+    <!-- App Scripts -->
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/db.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/habits.js"></script>
+    <script src="js/today.js"></script>
+    <script src="js/history.js"></script>
+    <script src="js/insights.js"></script>
+
+    <!-- Register Service Worker -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('service-worker.js')
+                .then(reg => console.log('Service Worker registered'))
+                .catch(err => console.log('Service Worker registration failed:', err));
+        }
+    </script>
+</body>
+</html>
